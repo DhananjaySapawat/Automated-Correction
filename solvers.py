@@ -5,9 +5,8 @@ class SentenceCorrector(object):
 
         # You should keep updating following variable with best string so far .
         self.best_state = None
-
-    def giveWord(self,w1,w2,w3):
-        return "hello"
+    def assignSubstring(self,s,i,j,v):
+        return s[0:i]+v+s[j+1:]
     def giveChar(self,i,start_state):
         c = start_state[i]
         cost = 5*[0]
@@ -24,64 +23,68 @@ class SentenceCorrector(object):
                     print(cost[k],m)
                 m = cost[k]
                 j = k
-        if(i==8):
-            print(c,": ",cost[0])
-            for k in range(4):
-                print(chars[k],": ",cost[k+1])
         if(j==0):
             return c
         else:
             return chars[j-1]
-    def giveCharForWord(self,w,j):
-        if(len(w)-j < 3):
-            return w
-        a = 3*[0]
-        for i in range(3):
-            a[i] = self.conf_matrix[w[j+i]]
-            a[i].append(w[j+i])
-        our = [10000000000000,w]
-        for x1 in a[0]:
-            for x2 in a[1]:
-                for x3 in a[2]:
-                    w = w[:j] + x1 + w[j+1:]
-                    w = w[:j+1] + x2 + w[j+2:]
-                    w = w[:j+2] + x3 + w[j+3:]
-                    if(self.cost_fn(w)< our[0]):
-                        our[0] = self.cost_fn(w)
-                        our[1] = w
-        return w[j]
-
-
-    def giveWord(self,i,w):
-        for j in range(len(w)):
-            w = w[:j] + self.giveCharForWord(w,j) + w[j+1:]
-        return w
+    def giveTwoWord(self,s,i):
+        m = self.cost_fn(s)
+        min_string = s
+        x1 = self.conf_matrix[s[i]]
+        x1.append(s[i])
+        x2 = self.conf_matrix[s[i+1]]
+        x2.append(s[i+1])
+        cost_array =[[]]
+        for a in x1:
+            for b in x2:
+                    d = a + b
+                    cost_stirng = self.assignSubstring(s,i,i+1,d)
+                    cost = self.cost_fn(cost_stirng)
+                    if(cost < m):
+                        min_string = d
+        return min_string
+    def giveThreeWord(self,s,i):
+        m = self.cost_fn(s)
+        min_string = s[i:i+3]
+        x1 = self.conf_matrix[s[i]]
+        x1.append(s[i])
+        x2 = self.conf_matrix[s[i+1]]
+        x2.append(s[i+1])
+        x3 = self.conf_matrix[s[i+2]]
+        x3.append(s[i+2])
+        cost_array =[[]]
+        for a in x1:
+            for b in x2:
+                for c in x3:
+                    d = a + b + c
+                    cost_stirng = self.assignSubstring(s,i,i+2,d)
+                    cost = self.cost_fn(cost_stirng)
+                    if(cost < m):
+                        min_string = d
+        return min_string
+    def giveWord(self,s,a,b):
+        if(len(s)<2):
+            return s[a:b]
+        elif(len(s)==2):
+            return self.giveTwoWord(s,a)
+        for i in range(b-a-2):
+            s = self.assignSubstring(s,a+i,a+i+2,self.giveThreeWord(s,a+i))
+        return s[a:b]
     def search(self, start_state):
         """
         :param start_state: str Input string with spelling errors
         """
         # You should keep updating self.best_state with best string so far.
         # self.best_state = start_state
-        """
-                s = 0
-                r = 0
-                for i in range(len(start_state)):
-                    if(start_state[i]==" " or i == len(start_state)-1):
-                        if(i == len(start_state)-1):
-                            r = i+1
-                        print(s,r)
-                        start_state = start_state.replace(start_state[s:r],self.giveWord(s,r,start_state))
-                        s = i+1
-
-                    r = i + 1
-        """
-        words = start_state.split()
-        str = " "
-        for i in range(len(words)):
-            words[i] = self.giveWord(i,words[i])
-        sentence = str.join(words)
-        print(sentence)
         print(start_state)
+        st = 0
+        for j in range(len(start_state)):
+            if(start_state[j]==' '):
+                start_state = self.assignSubstring(start_state,st,j-1,self.giveWord(start_state,st,j))
+                st = j+1
+            elif(j==len(start_state)-1):
+                j = j+1
+                start_state = self.assignSubstring(start_state,st,j-1,self.giveWord(start_state,st,j))
         for i in range(len(start_state)-1,-1,-1):
             if(start_state[i]==' '):
                 continue
