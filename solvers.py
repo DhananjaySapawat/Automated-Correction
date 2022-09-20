@@ -27,49 +27,29 @@ class SentenceCorrector(object):
             return c
         else:
             return chars[j-1]
-    def giveTwoWord(self,s,i):
-        m = self.cost_fn(s)
-        min_string = s
-        x1 = self.conf_matrix[s[i]]
-        x1.append(s[i])
-        x2 = self.conf_matrix[s[i+1]]
-        x2.append(s[i+1])
-        cost_array =[[]]
-        for a in x1:
-            for b in x2:
-                    d = a + b
-                    cost_stirng = self.assignSubstring(s,i,i+1,d)
-                    cost = self.cost_fn(cost_stirng)
-                    if(cost < m):
-                        min_string = d
-        return min_string
-    def giveThreeWord(self,s,i):
-        m = self.cost_fn(s)
-        min_string = s[i:i+3]
-        x1 = self.conf_matrix[s[i]]
-        x1.append(s[i])
-        x2 = self.conf_matrix[s[i+1]]
-        x2.append(s[i+1])
-        x3 = self.conf_matrix[s[i+2]]
-        x3.append(s[i+2])
-        cost_array =[[]]
-        for a in x1:
-            for b in x2:
-                for c in x3:
-                    d = a + b + c
-                    cost_stirng = self.assignSubstring(s,i,i+2,d)
-                    cost = self.cost_fn(cost_stirng)
-                    if(cost < m):
-                        min_string = d
-        return min_string
-    def giveWord(self,s,a,b):
-        if(len(s)<2):
-            return s[a:b]
-        elif(len(s)==2):
-            return self.giveTwoWord(s,a)
-        for i in range(b-a-2):
-            s = self.assignSubstring(s,a+i,a+i+2,self.giveThreeWord(s,a+i))
-        return s[a:b]
+    def sortfun(self,e):
+        return e[1]
+    def beam5(self,states,i,n,start_state):
+        self.best_state = states[0]
+        if(i==n):
+            return states[0]
+        if(start_state[i] == ' '):
+            return self.beam5(states,i+1,n,start_state)
+        char = self.conf_matrix[start_state[i]]
+        chars = [start_state[i]] + char
+        newstates = []
+        for state in states:
+            for c in chars:
+                state = state[:i]+c+state[i+1:]
+                newstates.append([state,self.cost_fn(state)])
+        newstates.sort(key=self.sortfun)
+        nextstates =[]
+        k = 50
+        if(k>len(newstates)):
+            k = len(newstates)
+        for j in range(k):
+            nextstates.append(newstates[j][0])
+        return self.beam5(nextstates,i+1,n,start_state)
     def search(self, start_state):
         """
         :param start_state: str Input string with spelling errors
@@ -77,18 +57,18 @@ class SentenceCorrector(object):
         # You should keep updating self.best_state with best string so far.
         # self.best_state = start_state
         print(start_state)
-        st = 0
-        for j in range(len(start_state)):
-            if(start_state[j]==' '):
-                start_state = self.assignSubstring(start_state,st,j-1,self.giveWord(start_state,st,j))
-                st = j+1
-            elif(j==len(start_state)-1):
-                j = j+1
-                start_state = self.assignSubstring(start_state,st,j-1,self.giveWord(start_state,st,j))
+        states = []
+        states.append(start_state)
+        chars = self.conf_matrix[start_state[0]]
+        for c in chars:
+            start_state = c + start_state[1:]
+            states.append(start_state)
+        final_state = self.beam5(states,1,len(start_state),start_state)
+        start_state = final_state
         for i in range(len(start_state)-1,-1,-1):
             if(start_state[i]==' '):
                 continue
             start_state = start_state [:i]+self.giveChar(i,start_state)+start_state[i+1:]
-        print(start_state)
+            self.best_state = start_state
         return start_state
         raise Exception("Not Implemented.")
