@@ -1,3 +1,5 @@
+import random
+import string
 class SentenceCorrector(object):
     def __init__(self, cost_fn, conf_matrix):
         self.conf_matrix = conf_matrix
@@ -19,8 +21,6 @@ class SentenceCorrector(object):
         j = 0
         for k in range(1,5):
             if(cost[k] < m):
-                if(i==0):
-                    print(cost[k],m)
                 m = cost[k]
                 j = k
         if(j==0):
@@ -68,7 +68,20 @@ class SentenceCorrector(object):
         for i in range(len(start_state)-1,-1,-1):
             if(start_state[i]==' '):
                 continue
-            start_state = start_state [:i]+self.giveChar(i,start_state)+start_state[i+1:]
+            start_state = start_state[:i]+self.giveChar(i,start_state)+start_state[i+1:]
             self.best_state = start_state
+        n = len(start_state) - 1
+        alphabet_string = string.ascii_lowercase
+        chars = list(alphabet_string)
+        while(True):
+            r = random.randint(0,n)
+            if(start_state[r]==' '):
+                continue
+            r2 = random.randint(0,25)
+            new_state = start_state[:r]+chars[r2]+start_state[r+1:]
+            if(self.cost_fn(new_state)<self.cost_fn(start_state)):
+                start_state =  new_state
+                self.best_state = new_state
+        print(start_state)
         return start_state
         raise Exception("Not Implemented.")
