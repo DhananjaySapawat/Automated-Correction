@@ -69,7 +69,6 @@ class SentenceCorrector(object):
         """
         # You should keep updating self.best_state with best string so far.
         # self.best_state = start_state
-        print(start_state)
         self.Inverse()
 
         # Beam Search Implemention
@@ -105,6 +104,5 @@ class SentenceCorrector(object):
             if(self.cost_fn(new_state)<self.cost_fn(start_state)):
                 start_state =  new_state
                 self.best_state = new_state
-        print(start_state)
         return start_state
         raise Exception("Not Implemented.")
