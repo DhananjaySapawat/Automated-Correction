@@ -29,12 +29,12 @@ class SentenceCorrector(object):
             return chars[j-1]
     def sortfun(self,e):
         return e[1]
-    def beam5(self,states,i,n,start_state):
+    def beamSearch(self,states,i,n,start_state):
         self.best_state = states[0]
         if(i==n):
             return states[0]
         if(start_state[i] == ' '):
-            return self.beam5(states,i+1,n,start_state)
+            return self.beamSearch(states,i+1,n,start_state)
         char = self.conf_matrix[start_state[i]]
         chars = [start_state[i]] + char
         newstates = []
@@ -49,7 +49,7 @@ class SentenceCorrector(object):
             k = len(newstates)
         for j in range(k):
             nextstates.append(newstates[j][0])
-        return self.beam5(nextstates,i+1,n,start_state)
+        return self.beamSearch(nextstates,i+1,n,start_state)
     def search(self, start_state):
         """
         :param start_state: str Input string with spelling errors
@@ -57,19 +57,25 @@ class SentenceCorrector(object):
         # You should keep updating self.best_state with best string so far.
         # self.best_state = start_state
         print(start_state)
+
+        # Beam Search Implemention
         states = []
         states.append(start_state)
         chars = self.conf_matrix[start_state[0]]
         for c in chars:
             start_state = c + start_state[1:]
             states.append(start_state)
-        final_state = self.beam5(states,1,len(start_state),start_state)
+        final_state = self.beamSearch(states,1,len(start_state),start_state)
         start_state = final_state
+
+        # Hill Climbing Implementation
         for i in range(len(start_state)-1,-1,-1):
             if(start_state[i]==' '):
                 continue
             start_state = start_state[:i]+self.giveChar(i,start_state)+start_state[i+1:]
             self.best_state = start_state
+
+        # Random Search Implementation 
         n = len(start_state) - 1
         alphabet_string = string.ascii_lowercase
         chars = list(alphabet_string)
